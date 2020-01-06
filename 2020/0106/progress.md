@@ -9,5 +9,5 @@
   - 1/20までには一通り実験を終わらせれるようにスケジューリング
 
 ## 国際学会に関する調査
-- [CHIRA2020](http://www.chira.scitevents.org/)
-- [HUCAPP](http://www.hucapp.visigrapp.org/)
+- [ICSOFT2020](http://www.icsoft.org/ImportantDates.aspx)
+- こちらの学会を調査します
