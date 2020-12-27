@@ -1,0 +1,8 @@
+*.aux
+*.bbl
+*.blg
+*.log
+*.gz
+*.toc
+__latexindent_temp.tex
+thesis.pdf
