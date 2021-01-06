@@ -1,12 +1,6 @@
 {
   "latex-workshop.latex.recipes": [
     {
-      "name": "wi2",
-      "tools": [
-        "ptex2pdf"
-      ]
-    },
-    {
       "name": "ptex2pdf",
       "tools": [
         "ptex2pdf",
