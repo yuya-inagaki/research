@@ -1,260 +1,292 @@
-% 第６章 評価
+% 第６章 本研究の詳細
 \newpage
 \renewcommand{\baselinestretch}{1.5}
-\section{評価}
+\section{本研究の詳細}
 \renewcommand{\baselinestretch}{1}
 
-本手法を評価する為に3つの実験を20代の大学生・大学院生10人に対して実施した。被験者はいずれも日常的にインターネットを使用するネットユーザーであった。
+\par デザイナーやネットユーザーが検証するウェブページのURLおよびページのレイアウトタイプを入力すると該当ページの顕著性マップとページの構造を組み合わせることにより顕著度が高い領域を要素単位で分析して顕著領域マップを出力する手法を提案する。また、一般ユーザー向けに特に顕著度が高い領域を纏めて描写した集約図を出力する手法を提案する。本手法のモデルアーキテクチャを図\ref{fig_ourmodel}に示す。
 
-\subsection{評価方法}
-\subsubsection{重要領域の抜き出し精度に関する評価}
-\par 1つ目の評価方法では本手法の重要領域の抜き出しの精度を測る為に、10個のウェブページのスクリーンショットをi-Pad上に表示して10秒以内に目立つ・目に入ったと感じた領域3箇所に1$\sim$3の数字を順番にApple pencilを使用してマークしてもらう実験を実施した。日常的に利用するウェブページを実験対象とすると経験則に基づく偏見が結果に反映されてしまう恐れがある為、日本のウェブページのデザインを業界カテゴリに分けて紹介しているJapan Web Design Gallery\cite{japanwebgallery}の業種カテゴリの中からランダムに選んだカテゴリの最初に表示されたウェブページを実験対象に使用した。ただし、アニメーションなどにより要素が常に動いているものや全画面が１枚の画像や動画のみで構成されているものは本システムでは評価できない為使用しなかった。実験に使用した10個のウェブサイトの一覧を表\ref{table:webpage-list}に、またそのスクリーンショットを図\ref{fig_evaluation-webpage}に示す。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=9cm]{figures/model.jpg}
+    \caption{モデルアーキテクチャ}
+    \label{fig_ourmodel}
+\end{figure}
 
+\par 本手法の手順は大きく分けて以下の4つである。
+\par(1) HTMLの取得と顕著性マップの生成
+\par(2) HTMLの解析によるタグの分析と位置情報の取得
+\par(3) レイアウトタイプを考慮した要素の顕著度計算
+\par(4) 顕著領域の視覚化\\
+
+\par なお、本研究ではサーバーサイドのプログラムを使用することで外部サーバーにアクセスしてウェブサイト上から必要な情報を取得するウェブスクレイピング技術としてウェブアプリケーションの自動テストツールであるSelenium WebDriver\cite{selenium}や取得したHTMLからタグや必要な情報を取得するPython用のライブラリであるBeautiful Soup\cite{beautifulsoup}を使用するが別のスクレイピング技術を使用しても実装は可能である。また、スクリーンショットを取得するウェブブラウザとしてFirefoxを使用するがChromeなど別のブラウザでも実装可能である。
+
+\subsection{HTMLの取得と顕著性マップの生成}\label{subsec:system01}
+\par 本システムではまず、入力されたURL情報を元にウェブスクレイピング技術を用いてスクリーンショットとHTMLを取得する。また、取得したスクリーンショットを用いて顕著性マップを生成する。デザイナーが開発段階で簡単に使用可能な様に入力するURLは、ネットワーク上に存在するウェブページだけでなくローカル環境のURLにも対応させている。HTMLの取得と顕著性マップの生成の流れを図\ref{fig_system01}に示す。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/06_process01.jpg}
+    \caption{HTMLの取得と顕著性マップの生成の流れ}
+    \label{fig_system01}
+\end{figure}
+
+\par まず始めに、Selenium WebDriverを用いてFirefoxを起動し、ブラウザのウィンドウサイズを一般的なパソコンで閲覧する条件に近い横1280px縦900pxに設定する。次に入力されたURLにアクセスを行い、ウェブページの読み込みが完了したらHTMLの取得を行う。取得したHTMLはインデントなどが乱れた状態である為、Selenium WebDriverと同じくウェブスクレイピング技術のライブラリであるBeautiful Soup\cite{beautifulsoup}を使用して扱いやすい状態に整形を行った後に保存する。
+
+\par 次にウェブページのスクリーンショットを取得する。取得するスクリーンショットは、重要度が高いコンテンツはウェブページの最上部に存在する可能性が高いという考えから、ウェブページにアクセスした時点で閲覧可能な最上部の横1280px縦900pxとした。さらに、取得したスクリーンショットから顕著性マップを生成する。顕著性マップの生成には人間の目の視覚認識と同様に色・輝度・方向のそれぞれの視覚特徴を抽出した後に重み付けして足し合わせることにより顕著性マップを生成する最もベーシックなモデルのItti-Kochらの顕著性マップ生成モデルをベースに使用した。顕著性マップ生成モデルには深層学習を使用した精度の高いモデルまで幅広く存在しているが、特にバイアスを考慮しておらず扱いやすいモデルを使用することにした。
+\par ここで顕著性マップ生成モデルにより出力される顕著性マップはRGBの３色チャンネルで出力されるが、計算処理を行いやすいように単色チャンネルで表されるグレースケール画像に変換して保存する。図\ref{fig_06_example_saliencymap}に早稲田大学ウェブサイトトップページ(2021年1月時点）\cite{waseda_top}のスクリーンショットを入力した時に生成される取得されるグレースケール顕著性マップの例を示す。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=12cm]{figures/06_ex-saliencymap}
+  \caption{出力されるウェブページの顕著性マップの例}
+  \label{fig_06_example_saliencymap}
+\end{figure}
+
+
+\subsection{HTMLの解析によるタグの分析と位置情報の取得}\label{subsec:system02}
+\par ここでは第\ref{subsec:system01}節で取得したHTMLの解析を行いウェブページ上の要素の位置情報とそのサイズを取得する。HTMLの解析によるタグの分析と位置の取得の流れを図\ref{fig_system02}に示す。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/06_process02.jpg}
+    \caption{HTMLの解析によるタグの分析と位置の取得の流れ}
+    \label{fig_system02}
+\end{figure}
+
+\par まず始めに第\ref{subsec:system01}節で取得したHTMLの分析を行い、Selenium WebDriverで表\ref{table:gettaglist}に示す7個のタグ要素のidまたはclass名と左上の頂点の座標と縦と横のサイズを取得してそれらの情報をデータベースに記録する。各要素の座標の取得方法については、ウェブブラウザの表示領域の左上を基準点(0,0)として基準点からの距離を要素の座標とした。また、時間短縮とエラーを防ぐために取得したスクリーンショット領域内に表示されている要素のみを取得する。早稲田大学ウェブサイトトップページ(2021年1月時点）\cite{waseda_top}および、Yahoo! JAPANトップページ(2021年1月時点）\cite{yahoo}のウェブページの要素情報を取得して、直線で各要素を囲んだ例を図\ref{fig_06_ex-lineview}に示す。表示領域の指定要素のサイズと位置を取得している事が確認できる。
 
 \begin{table}[h]
-    \caption{精度評価実験に使用したウェブページの一覧（全て2019年1月20日閲覧）}
-    \label{table:webpage-list}
+    \caption{位置情報とサイズを取得するタグの一覧}
+    \label{table:gettaglist}
     \centering
-    \begingroup
-    \renewcommand{\arraystretch}{1.1} % 表の行間の変更
-    \small
-     \begin{tabular}{llll}
+     \begin{tabular}{clll}
       \hline
-      & ページ名 & カテゴリ & URL \\
+      要素名 & タグ & 意味 \\
       \hline \hline
-      A & アクロス福岡 & ホール・劇場 & https://www.acros.or.jp/ \\
-      B & カキモリ & クリエイティブ & http://kakimori.com/ \\
-      C & 株式会社ヒビノ & 音楽・楽器 & https://www.hibino.co.jp/ \\
-      D & 上越市立水族館 & 水族館 & http://umigatari.jp/joetsu/ \\
-      E & PLEXLOGGER & カメラ & http://plextor.jp/plexlogger/ \\
-      F & 川崎市民交流センター & ホール・劇場 & https://s-tette.jp/ \\
-      G & 株式会社まちづくり長野 & まちづくり & http://machidukuri-nagano.jp/ \\
-      H & 渋谷ストーム & 不動産 & https://shibuyastream.jp/ \\
-      I & 司法書士青木事務所 & 会計・法律 & https://aoki-jimusho.net/ \\
-      J & 東北芸術工科大学 & 大学・専門学校 & https://www.tuad.ac.jp/ \\
+      ブロック要素 & \textless div\textgreater & ブロック要素を表す \\
+      見出し1 & \textless h1\textgreater & 文書中の見出しを示す為の要素で最も重要 \\
+      見出し2 & \textless h2\textgreater & 文書中の見出しを示す為の要素で2番目に重要 \\
+      見出し3 & \textless h3\textgreater & 文書中の見出しを示す為の要素で3番目に重要 \\
+      リンク & \textless a\textgreater & リンクを示す \\
+      インライン要素 & \textless span\textgreater & インライン要素を示し、重要な要素が多い \\
+      段落 & \textless p\textgreater & テキスト要素を表す \\
+      入力欄 & \textless input\textgreater & フォームなどの入力要素を表す \\
+      イメージ & \textless img\textgreater & 画像要素を表す \\
       \hline
     \end{tabular}
-    \endgroup
 \end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=12cm]{figures/06_ex-lineview.jpg}
+  \caption{ウェブページの要素の取得の様子}
+  \label{fig_06_ex-lineview}
+\end{figure}
+
+\subsection{レイアウトタイプを考慮した要素の顕著度計算}\label{subsec:system03}
+\par ここでは第\ref{subsec:system01}節で生成した顕著性マップと第\ref{subsec:system02}節で取得した各要素の位置情報とサイズを組み合わせて各要素の顕著度を計算する。レイアウトタイプを考慮した要素内顕著度の計算の流れを図\ref{fig_system03}に示す。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/06_process03.jpg}
+    \caption{顕著度の計算の流れ}
+    \label{fig_system03}
+\end{figure}
+
+\par まず始めに第\ref{subsec:system01}節で作成した顕著性マップを読み込む。使用端末により異なるが最近のパソコンは画面の高画質化が進み、AppleのRetinaディスプレイなどの高精細ディスプレイでは複数のピクセルで1つのドットを表しており倍近い解像度でスクリーンショットが保存されている。その為、単純に顕著性マップを読み込み要素の位置情報と照らし合わせるとズレが生じる。この問題を解決する為に読み込んだ顕著性マップを圧縮して実際にウェブブラウザ上で取得した位置情報と同じサイズに合わせる必要がある。
+
+\par 次に第\ref{subsec:system02}節で取得した各要素ごとの顕著度を計算するために顕著性マップの該当要素の領域をトリミングする。また、トリミングした領域のピクセルレベルでの顕著度の積分を要素面積の平均顕著度で割る事で要素の密度顕著度を計算する。具体的な計算方法をアルゴリズム\ref{alg:element_saliency}に示す。従来は要素内部のピクセルレベルの顕著度の平均を顕著度としていたが、要素のピクセルレベルでの密度顕著度を計算したことで、小さな要素から大きい要素までバランスよく顕著度を評価する事が可能である。
+
+\par しかしながらアイコンなどの極端に小さい要素の顕著度が過剰に高く評価されてしまうなどの問題が生じた。またウェブページの左上から中央にかけての領域に視線が集まりやすいf-biasなどのウェブページ固有の現象なども存在する。それらの問題を解決するために、本システムでは要素のサイズと位置情報によるレイアウトを考慮した顕著度の重み付けを行う事でより正確に顕著度を判定出来るように工夫した。
+
+\begin{algorithm}[H]
+  \small
+  \caption{要素の顕著度計算手法}
+  \label{alg:element_saliency}
+  \begin{algorithmic}
+  \Function{get\_element\_salient\_level}{start\_x, start\_y, end\_x, end\_y}
+  \If{(end\_x - start\_x) $>$ 0 and (end\_y - start\_y) $>$ 0}
+    \State cliped = Element.canvas.cv2[start\_y:end\_y, start\_x:end\_x] //要素をトリミング
+    \State element\_occupancy = $\frac{(end\_x - start\_x) \times (end\_y - start\_y)}{width * height}$ //要素の占有率を計算
+    \State salient\_level = $\frac{get\_element\_total\_saliency(cliped)}{get\_total\_saliency() \times element\_occupancy}$ //要素の顕著度を計算
+    \State \Return salient\_level
+  \Else
+    \State \Return 0
+  \EndIf
+  \EndFunction
+  \State
+  \Function{get\_total\_saliency}{}
+    \State clipped = Element.canvas.cv2[0:height, 0:width] //ウェブページ全体
+    \State total\_saliency\_per\_row = np.sum(clipped, axis=0) //行の色の合計を取得
+    \State total\_saliency = np.sum(total\_saliency\_per\_row, axis=0) //列の色の合計を取得
+    \State \Return np.uint8(total\_saliency)
+  \EndFunction
+  \State
+  \Function{get\_element\_total\_saliency}{clipped}
+    \State total\_saliency\_per\_row = np.sum(clipped, axis=0) //行の色の合計を取得
+    \State total\_saliency = np.sum(total\_saliency\_per\_row, axis=0) //列の色の合計を取得
+    \State \Return np.uint8(total\_saliency)
+  \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\subsubsection{要素のサイズと要素タイプによる重み付け}\label{subsec:system03-1}
+\par 先ほど述べた通り、アイコンなどの極端に小さい要素の顕著度が極端に高く計算される傾向があることが判明した為、要素の大きさによる重み付けを行うことで顕著度の偏りをなくす。ウェブページに存在するアイコンには様々なサイズのものが存在する。また画像要素だけでなく、CSSで描写されたアイコンやdiv要素にbackgroundプロパティで指定されたものなど要素のタイプも様々である。そこで本システムでは一般的にアイコンと呼ばれるサイズ以下の要素の重みを変更して適切な顕著度を計算する事にした。
+
+\par 我々が日常でよく閲覧するアイコンとしてWindowsやMacやIOSなどのOS標準のアイコンが存在する。MicrosoftによるとWindowsではダイアログボックスやエラーページなどに32px$\times$32pxのアイコンが標準サイズとして使用されている\cite{windowsicon}。また、iPhoneなどのIOSやMacには64px$\times$64pxのアイコンが標準サイズとして使用されている\cite{appleicon}。日常でよく使用するアイコンのサイズのほとんどは32px$\times$32pxおよび64px$\times$64pxであることから人はこれらのサイズの要素をアイコンと認識する傾向が高い。以上のことから本システムでは64px$\times$64px以下のサイズの要素をアイコン要素とみなして顕著度を低く重み付けするようにアルゴリズムを\ref{alg:weight-size}のように設定した。なお、重み付けの値については本来であれば深層学習等を用いて適切な重み付けを学習するのが良いが、極端に小さな要素の顕著度を適切に判断できるように様々な値で繰り返し実験を行い最も実際の顕著度に近くなった値を設定した。
+
+\begin{algorithm}[H]
+  \small
+  \caption{サイズによる重み付け}
+  \label{alg:weight-size}
+  \begin{algorithmic}
+  \Function{apply\_size\_bias}{salient\_level, start\_x, start\_y, end\_x, end\_y}
+  \State element\_area =  (end\_x - start\_x) $\times$ (end\_y - start\_y) //要素の面積を計算
+  \If{element\_area $>$ 64 $\times$ 64 }
+    \State salient\_level = salient\_level
+  \Else
+    \State salient\_level = salient\_level $\times$ 0.5
+  \EndIf
+  \State \Return salient\_level
+  \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=12cm]{figures/06_textbias.jpg}
+  \caption{テキスト箇所の顕著性評価比較}
+  \label{fig_textbias}
+\end{figure}
+
+\par ウェブページには自然画像とは異なり様々なウェブページ固有の要素が存在する。その中の一つであるテキスト要素は自然画像にはほとんど存在せずあまり顕著度が高く評価されないがウェブページには多く存在する。図\ref{fig_textbias}にウェブページのテキスト表示箇所のオリジナルモデルの顕著領域マップと実際の視線データから作成した顕著領域マップの比較を示す。図から分かる通り人はテキスト要素に注目する傾向が高いが、Itti-Kochらのモデルなどの自然画像向け顕著性マップ生成モデルはテキストの顕著度をあまり高く評価しない。テキスト要素の顕著度を正しく評価するために該当要素の顕著度を高くするように重み付けを行った。
+
+
+\subsubsection{要素の位置による重み付け}\label{subsec:system03-2}
+\par 関連研究でも触れたShenらの人間の目の視線を測定するアイトラッカーを用いてウェブページの顕著性を測定した実験によると、図\ref{fig_shen-experience}に示すようにテキスト中心と画像中心とテキスト画像が混合した全てのウェブページにおいて人は左上の領域と中心付近に目線が行く傾向が判明した。ウェブページの左上から中央にかけての領域に注目が集まるの現象はf-biasと言う名で一般的に知られており、本システムでも左上の領域と中心付近で顕著度が高くなるように重み付けを行う。
+
+
+\par 本システムの位置情報による重み付けの手法をアルゴリズム\ref{alg:weight-position}に示す。要素の中心点の位置によって要素の顕著度の重み付けを行うことにした。左上の領域に大きな重みをつけるtop-left biasについては、横軸方向にどれだけの重みの差をつけるかを表すplace\_weight\_xと縦軸方向にどれだけの重みの差をつけるかを表すplace\_weight\_yの2つの数値を与える事で表現した。また、中心領域に大きな重みをつけるcenter biasにおいては中心部と最外部でどれだけ重みの差をつけるかを表すplace\_weight\_cを与える事で表現した。さらにtop-left biasとcenter biasを組み合わせる事で左上と中央部分に大きな重みをつけるf-biasを表現する。本研究においては横軸の重みの差を表すplace\_weight\_x = 0.1に縦軸の重みの差を表すplace\_weight\_y = 0.4に中心の重みの差を表すplace\_weight\_c = 0.2に設定した。正方形の20$\times$20マスのブロックをウェブページに見立てて重みの数値をシミュレーションした結果を図\ref{fig_fbias}に示す。左図はtop-left biasを、中央はcenter biasを、右図は２つを組み合わせたf-biasを表す。また、赤色に近くほど重みの数値が大きく白色に近くほど数値が小さいことを表す。さらに、図\ref{fig_fbias-test}にテスト用の同じ色の正方形を等間隔で並べたウェブページを入力した時の結果を示す。重み付け前の顕著性マップでは全ての正方形が同じ明度で表わされているが、重み付け後の顕著性マップでは左上から中央にかけての正方形の明度が高く表わされている事が確認できる。なお、認識しやすいように重み付け後の顕著性マップには顕著度のランキングを緑色の枠線の色で表している。
+
+\par 最後に、要素毎に以上の重み付け処理を行なった結果の顕著度を最終的な出力に使用する為にCSVファイルに追記する。
+
+\begin{algorithm}[H]
+    \caption{位置情報による重み付け(F-bias)}
+    \label{alg:weight-position}
+    \begin{algorithmic}
+    \Function{calc\_salient\_level}{start\_x, start\_y, size\_w, size\_h}
+    \State salient\_level $ \leftarrow $ 要素の明度の平均値(0-255)
+    \State width $ \leftarrow $ 顕著性マップの幅(px)
+    \State height $ \leftarrow $ 顕著性マップの高さ(px) 
+    \State place\_weight\_x $ \leftarrow $ 0.1 //横軸方向の重み
+    \State place\_weight\_y $ \leftarrow $ 0.4 //縦軸方向の重み
+    \State place\_weight\_c $ \leftarrow $ 0.2 //中心方向の重み
+    \If{$size\_w < width$ and $size\_h < height$}
+        \State x\_bias $ \leftarrow $ 1-(place\_weight\_x-((width-(start\_x+$\frac{size\_w}{2}$))*$\frac{place\_weight\_x}{width}$))
+        \State y\_bias $ \leftarrow $ 1-(place\_weight\_y-((height-(start\_y+$\frac{size\_h}{2}$))*$\frac{place\_weight\_y}{height}$))
+        \State top\_left\_bias $ \leftarrow $ x\_bias * y\_bias
+        \State center\_bias\_x $ \leftarrow $ $|\frac{width}{2}-(start\_x+\frac{size\_w}{2})|^2$
+        \State center\_bias\_y $ \leftarrow $ $|\frac{height}{2}-(start\_y+\frac{size\_h}{2})|^2$
+        \State center\_bias $ \leftarrow $ $\sqrt{center\_bias\_x + center\_bias\_y} $
+        \State salient\_level $ \leftarrow $ salient\_level*(topleft\_bias - (place\_weight\_c * center\_bias))
+    \EndIf
+    \State \Return salient\_level
+    \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/fbias.png}
+    \caption{位置情報による重み付けのシミュレーション}
+    \label{fig_fbias}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/fbias-test.png}
+    \caption{テスト用ページを入力して得た顕著性マップ}
+    \label{fig_fbias-test}
+\end{figure}
+
+
+\subsection{顕著領域の視覚化}\label{subsec:system04}
+% 領域を塗りつぶして生成する顕著性マップと重要領域のランキングの生成方法の記述
+\par ここでは第\ref{subsec:system03}節で計算した顕著度を元に顕著領域の視覚化を行う。本システムでは、顕著度が高い重要領域を要素単位で塗りつぶした顕著領域マップと特に顕著度が高い要素を一つにまとめた集約図の2つの出力を行う。顕著領域の視覚化の流れを図\ref{fig_system04}に示す。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/system04.png}
+    \caption{顕著領域の視覚化の流れ}
+    \label{fig_system04}
+\end{figure}
+
+\subsubsection{顕著度ランキングの生成}\label{subsec:system04-1}
+\par 顕著領域マップと集約図の生成にあたり、第\ref{subsec:system03}節で計算した顕著度のランキングを作成する。顕著度ランキングの計算アルゴリズムをアルゴリズム\ref{alg:lanking}に示す。まず始めに、第\ref{subsec:system03}節でCSVに保存した顕著度を顕著度が高い順にソートする。本来であれば、顕著度が高い順にランキングを付ければ良いが、図\ref{fig_system4-rank}に示すように同一要素を内包している他の要素も顕著度が高く評価されてしまう問題が生じる。同じ要素が顕著度ランキングに何度も出現する事は問題である為、一度顕著度が高いと評価した要素を内包する外部の要素をNGリストに格納して顕著度ランキングに入らないように評価する。
+
+
+
+\newpage
+\begin{algorithm}[H]
+    \caption{顕著度ランキング}
+    \label{alg:lanking}
+    \begin{algorithmic}
+
+    \State stag\_list $ \leftarrow $ CSVの読み組み, tag\_list\_num $ \leftarrow $ CSVの行数
+    \State salient\_level = [] // 顕著度を格納するリスト, ng\_list = [] // NGリスト
+    \State high\_element\_list = [] // 顕著度ランキングを格納するリスト
+    \For{$i$ in $range(tag\_list\_num)$}
+        \State salient\_level.append(tag\_listのi行目の要素の顕著度)
+    \EndFor    
+    \State salient\_level\_sort $ \leftarrow $ salient\_levelをソート
+    \State salient\_num $ \leftarrow $ 10, temporal\_num $ \leftarrow $ 1, salient\_num\_first $ \leftarrow $ salient\_num
+
+    \While{while salient\_num $>$ 0}
+        \State most\_salient $ \leftarrow $ salient\_level\_sort[tag\_list\_num - temporal\_num]
+        \If{(most\_salient in ng\_list) == False}
+        \State start\_x, start\_y, end\_x, end\_y $\leftarrow$ CSVのmost\_salient行目から取得
+        \State size $\leftarrow$ CSVからmost\_salient行目の要素のwidth $*$ heightを取得
+        \If{(end\_x $-$ start\_x)/(end\_y $-$ start\_y) $<$ 10}
+        \State high\_element\_list.append(most\_salient)
+        \State salient\_num $\leftarrow$ salient\_num - 1
+        \For{$i=1$ in $range(tag\_list\_num)$}
+        \If{(most\_salient in ng\_list) == False}
+        \State r\_start\_x, r\_start\_y, r\_end\_x, r\_end\_y $\leftarrow$ i行目から取得
+        \State r\_size $\leftarrow$ CSVからi行目の要素のwidth*heightを取得
+        \If{i行目要素とmost\_salient行目要素が内包関係}
+        \If{r\_size $-$ size $<$ 200 $or$ size $-$ r\_size $<$ 200}
+        \State ng\_list.append(i) //NGリストにi行目要素を格納
+        \EndIf
+        \EndIf
+        \EndIf
+        \EndFor 
+        \EndIf
+        \Else
+        \State temporal\_num $\leftarrow$ temporal\_num $+$ 1
+        \EndIf
+    \EndWhile
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/include-rank.png}
+    \caption{要素の内包関係を考慮した時としない時の顕著度ランキング}
+    \label{fig_system4-rank}
+\end{figure}
+
+\subsubsection{顕著領域マップの生成}\label{subsec:system04-1}
+\par 顕著領域マップの生成方法について説明する。第\ref{subsec:system03}節で計算した顕著度は0$\sim$255の範囲内の実数で表わされている。位置情報を取得した画面上に表示されている全ての要素の領域をこの顕著度を明度とした長方形で塗り潰す。また、第\ref{subsec:system03-1}節で説明した重み付けにより全体的に顕著度が低くなっている為、補正値を与える事ですべての要素の顕著度を補正値分高くすることとする。
+\par さらに、特に顕著度が高い重要領域を視覚化する為に第\ref{subsec:system04-1}項で作成した顕著度ランキングの上位10個の要素の外枠を顕著度が高い順に明るい緑色の線で描写する。以上の作業を行う事で顕著領域マップの生成を行う。図\ref{fig_tile-example}に第\ref{subsec:system04-1}項で説明したテスト用ウェブページのURLを入力して生成された顕著領域マップの例を示す。
+
+\subsubsection{集約図の生成}\label{subsec:system04-2}
+\par 集約図の生成方法について説明する。第\ref{subsec:system04-1}項で作成した顕著度ランキングを元に顕著度が上位10個の要素の領域をスクリーンショットから切り取りタイル状に並べる。本システムでは上段に上位2個を、中段に3位$\sim$5位の3個を、下段には6位$\sim$10位の5個を並べる事で表現した。図\ref{fig_tile-example}に第\ref{subsec:system04-1}項で説明したテスト用ウェブページのURLを入力して生成された集約図の例を示す。
 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=12cm]{figures/webpage.png}
-    \caption{使用したウェブページのスクリーンショット}
-    \label{fig_evaluation-webpage}
+    \includegraphics[width=10cm]{figures/example-output.png}
+    \caption{生成される顕著領域マップと集約図の例}
+    \label{fig_tile-example}
 \end{figure}
-
-\subsubsection{重要領域の認識のしやすさに関する評価}
-\par 2つ目の評価方法では既存の顕著性マップと提案手法の顕著領域マップでの重要領域の認識のしやすさについて評価した。評価では顕著性マップの概要について簡単に説明した後に図\ref{fig_experience02}に示すJapan Web Design Gallery\cite{japanwebgallery}に掲載されている２つのウェブページの既存の顕著性マップと提案手法の顕著領域マップの例を提示して、最後に\ref{table:question01}に示すアンケートを実施した。アンケートでは既存の顕著性マップと提案手法の顕著領域マップの重要領域の認識のしやすさの度合いと、どのような点で認識しやすく感じたり認識しにくいと感じるのかを記述式で質問した。実験に使用した2つのウェブページ情報を表\ref{table:webpage-list2}に示す。
-
-
-\begin{table}[h]
-    \caption{重要領域認識実験に使用したウェブページの一覧（全て2019年1月20日閲覧）}
-    \label{table:webpage-list2}
-    \centering
-    \begingroup
-    \renewcommand{\arraystretch}{1.2} % 表の行間の変更
-    \small
-     \begin{tabular}{llll}
-      \hline
-      & ページ名 & カテゴリ & URL \\
-      \hline \hline
-      K & 下関春帆楼 & カフェ・レストラン & https://www.shunpanro.com/ \\
-      L & 白洋舎 & クリーニング & http://www.hakuyosha.co.jp/ \\
-      \hline
-    \end{tabular}
-    \endgroup
-\end{table}
-
-
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=12cm]{figures/experience02.png}
-    \caption{既存の顕著性マップと提案手法（顕著領域マップ）の比較実験}
-    \label{fig_experience02}
-\end{figure}
-
-\begin{table}[h]
-    \caption{アンケートの質問内容１}
-    \label{table:question01}
-    \centering
-    \begingroup
-    \renewcommand{\arraystretch}{1} % 表の行間の変更
-    \small
-    \begin{tabular}{|l|l|l|l|}
-        \hline
-        \multicolumn{2}{|c|}{質問内容} & \multicolumn{2}{|c|}{選択肢・記述式} \\ \hline
-        & & a & 非常に認識しにくい \\ \cline{3-4}
-        & & b & 認識しにくい \\ \cline{3-4}
-        Q1 & 既存の顕著性マップは & c & どちらでもない \\ \cline{3-4}
-        & 重要領域を認識しやすいと感じるか & d & 認識しやすい \\ \cline{3-4}
-        & & e & 非常に認識しやすい \\ \hline
-        & & a & 非常に認識しにくい \\ \cline{3-4}
-        & & b & 認識しにくい \\ \cline{3-4}
-        Q2 & 提案手法の顕著領域マップは & c & どちらでもない \\ \cline{3-4}
-        & 重要領域を認識しやすいと感じるか & d & 認識しやすい \\ \cline{3-4}
-        & & e & 非常に認識しやすい \\ \hline
-        Q3 & 既存の顕著性マップの認識しづらいと感じる点 & \multicolumn{2}{|l|}{記述式} \\ \hline
-        Q4 & 既存の顕著性マップの認識しやすいと感じる点 & \multicolumn{2}{|l|}{記述式} \\ \hline
-        Q5 & 顕著領域マップの認識しづらいと感じる点 & \multicolumn{2}{|l|}{記述式} \\ \hline
-        Q6 & 顕著領域マップの認識しやすいと感じる点 & \multicolumn{2}{|l|}{記述式} \\ \hline
-        Q7 & 特定の要素の重要度を調べたい時 & a & 既存の手法 \\ \cline{3-4}
-        & どちらの手法が認識しやすいと感じるか  & b & 提案手法 \\ \hline
-        \end{tabular}
-        \endgroup
-\end{table}
-
-
-\subsubsection{集約図の効果に関する評価}
-\par 3つ目の評価方法では特に顕著度が高い重要領域をタイル状に並べてまとめた集約図の効果について評価した。評価ではまず始めに被験者に図\ref{fig_experience03-2}に示す集約図の例を見せ、集約図がどのようにして生成されるのか簡単に説明した後に図\ref{fig_experience03-1}に示す集約図を見てウェブページの内容を予想してもらい、分かる範囲でページ内容を記述式で回答してもらった。最後に表\ref{table:question02}に示す集約図の効果に関する質問に選択式で解答してもらった。また、アンケートの最後には自由記入形式の感想欄を設けた。実験に使用したウェブページを表\ref{table:webpage-list3}に示す。
-
-\begin{table}[h]
-    \caption{集約図の効果評価実験に使用したウェブページ（全て2019年1月20日閲覧）}
-    \label{table:webpage-list3}
-    \centering
-    \begingroup
-    \renewcommand{\arraystretch}{1.2} % 表の行間の変更
-    \small
-     \begin{tabular}{llll}
-      \hline
-      & ページ名 & カテゴリ & URL \\
-      \hline \hline
-      M & 株式会社エース & コンビニ・スーパー・小売り & https://www.ace-group.co.jp/ \\
-      \hline
-    \end{tabular}
-    \endgroup
-\end{table}
-
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=10cm]{figures/experience03-2.png}
-    \caption{集約図の例}
-    \label{fig_experience03-2}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=6cm]{figures/experience03-1.png}
-    \caption{ページ内容を予想してもらった集約図（株式会社エースHP）}
-    \label{fig_experience03-1}
-\end{figure}
-
-
-\begin{table}[H]
-    \caption{アンケートの質問内容2}
-    \label{table:question02}
-    \centering
-    \begingroup
-    \renewcommand{\arraystretch}{1} % 表の行間の変更
-    \small
-    \begin{tabular}{|l|l|l|l|}
-        \hline
-        \multicolumn{2}{|c|}{質問内容} & \multicolumn{2}{|c|}{選択肢} \\ \hline
-        & & a & 全く判断できない \\ \cline{3-4}
-        Q8 & 重要領域のみを抽出した集約図を見て & b & 少し判断できる \\ \cline{3-4}
-        & ページ内容を判断することはできるか & c & ある程度判断できる \\ \cline{3-4}
-        & & d & ほとんど判断できる \\ \hline
-        & & a & 全く効果的でない \\ \cline{3-4}
-        & 初見のウェブページの内容を一目で & b & あまり効果的でない \\ \cline{3-4}
-        Q9 & 確認したい時重要領域を抽出してまとめる & c & どちらでもない \\ \cline{3-4}
-        & 手法は効果的だと思うか & d & 効果的である \\ \cline{3-4}
-        & & e & 非常に効果的である \\ \hline
-        \end{tabular}
-        \endgroup
-\end{table}
-
-
-\subsection{結果と考察}
-\subsubsection{重要領域の抜き出し精度に関する評価}\label{subsec:evaluation1}
-\par 1つ目の評価方法ではウェブページのスクリーンショットに目立つ・目に入ったと感じた領域3箇所に1$\sim$3の数字を順番にマークしてもらうことで本手法の重要領域の抜き出しの精度を確認した。具体的には、被験者にマークしてもらった3つの要素が私のシステムが出力した要素の顕著度ランキング内にどれほどの精度で含まれているかを確認した。精度評価実験の結果を表\ref{table:evaluation01-1}に示す。また、ウェブページごとの精度評価実験の結果を表\ref{table:evaluation01-2}に示す。
-\par 平均合致個数は10人の被験者が10個のウェブページでマークした3個の要素の内何個が私のシステムの顕著度ランキングにより出力された要素の中に含まれているのかを表しており、合致率はその割合を表している。評価の結果、私のシステムの顕著度ランキングにより出力された顕著度が上位3つの要素には被験者が目立つと感じた3つの要素の内平均1.14個(38.0$\%$)が含まれていることが確認できた。また、上位5個には平均1.75個(58.33$\%$)、上位7個には平均2.04個(68.0$\%$)、上位10個には平均2.64個(88.0$\%$)の精度で被験者が目立つと感じた3つの要素が含まれていることが確認できた。私のシステムが重要度が高いと判断した上位10個の要素には88.0$\%$の合致率で被験者が目に入ったとマークした要素が含まれており、人が重要だと感じる要素を適切に判断し取得出来ていると言える。
-\par 次に、表\ref{table:evaluation01-2}に示すウェブページごとの精度評価実験の結果より特にDやEのウェブページの合致率が低く評価されている事が確認できる。これらのウェブページには画像がCSSのbackgroundプロパティを使用する事で背景として設定されており、現時点での私のシステムでは検出する事が出来なかった事が原因の一つである。また、大きな画像の顕著度が低く判断されてしまうことも原因の一つであると考えた。
-
-\begin{table}[H]
-    \caption{精度評価実験結果}
-    \label{table:evaluation01-1}
-    \centering
-     \begin{tabular}{c||cccc}
-      \hline
-      & 上位3位 & 上位5位 & 上位7位 & 上位10位 \\
-      \hline \hline
-      平均合致個数 & 1.14個/3個 & 1.75個/3個 & 2.04個/3個 & 2.64個/3個 \\
-      合致率 & 38.0$\%$ & 58.33$\%$ & $68.0\%$ & $88.0\%$ \\
-      \hline
-    \end{tabular}
-\end{table}
-
-\begin{table}[H]
-    \caption{ウェブページごとの精度評価実験結果}
-    \label{table:evaluation01-2}
-    \centering
-     \begin{tabular}{c||cccc}
-      \hline
-      & 上位3位 & 上位5位 & 上位7位 & 上位10位 \\
-      \hline \hline
-      A & 0.6個(20.0$\%$) & 2.5個(83.3$\%$) & 2.8個(93.3$\%$) & 2.9個(96.7$\%$) \\
-      B & 0.4個(13.3$\%$) & 0.6個(20.0$\%$) & 1.0個(33.3$\%$) & 3.0個(100$\%$) \\
-      C & 2.1個(70.0$\%$) & 2.3個(76.7$\%$) & 2.5個(83.3$\%$) & 2.9個(96.7$\%$) \\
-      {\bf D} & {\bf 0.3個(10.0$\%$)} & {\bf 1.4個(46.7$\%$)} & {\bf 1.5個(50.0$\%$)} & {\bf 1.5個(50.0$\%$)} \\
-      {\bf E} & {\bf 0.5個(16.7$\%$)} & {\bf 0.8個(26.7$\%$)} & {\bf 1.2個(40.0$\%$)} & {\bf 1.8個(60.0$\%$)} \\
-      F & 1.5個(50.0$\%$) & 2.7個(90.0$\%$) & 2.8個(93.3$\%$) & 2.9個(96.7$\%$) \\
-      G & 1.4個(46.7$\%$) & 1.7個(56.7$\%$) & 1.8個(60.0$\%$) & 3.0個(100$\%$) \\
-      H & 1.8個(60.0$\%$) & 2.7個(90.0$\%$) & 3.0個(100$\%$) & 3.0個(100$\%$) \\
-      I & 1.3個(43.3$\%$) & 1.3個(43.3$\%$) & 1.3個(43.3$\%$) & 2.9個(96.7$\%$) \\
-      J & 1.5個(50.0$\%$) & 1.5個(50.0$\%$) & 2.5個(83.3$\%$) & 2.5個(83.3$\%$) \\
-      \hline
-    \end{tabular}
-\end{table}
-
-
-\subsubsection{重要領域の認識のしやすさに関する評価}
-\par 2つ目の評価方法では既存の顕著性マップと提案手法の顕著領域マップでの重要領域の認識のしやすさについてアンケート形式で評価した。重要領域の認識のしやすさについて質問したQ1とQ2の結果を図\ref{fig_evaluation02-1}に示す。結果から、既存の顕著性マップは「認識しやすい」と「認識しにくい」が4名で「どちらでもない」と「非常に認識しにくい」が1名と意見がばらつく結果となった。一方で私の提案手法では「非常に認識しやすい」が4名、「認識しやすい」が5名、「どちらでもない」が1名で「認識しにくい」と言う意見はなかった。以上の事から、提案手法が重要領域の認識において既存の顕著性マップと比べ優れていることは明らかである。
-\par またQ3$\sim$Q6の既存の顕著性マップと提案手法の顕著領域マップのそれぞれの重要領域の認識のしやすさと認識のしにくさを記述してもらう問いを分析すると、既存の顕著性マップの重要領域の認識のしずらさとして挙げられた「要素の境界が分かりづらい」や「どこが最も顕著なのか顕著の度合いを比較しにくい」といった意見を提案手法の顕著領域マップでは改善できたという肯定的な意見が多かった。しかしながら、既存の顕著性マップと比較して提案手法の顕著領域マップは「元のウェブページの様子が見えない為スクリーンショットと照らし合わせる必要がある」や「顕著度ランキングの枠線の濃淡の差が分かりづらい」などと言った意見も挙げられた。提案手法の顕著領域マップの認識のしづらさとして挙げられた問題点は今後の改善に生かして行く必要があると考える。
-\par さらに、Q7では特定の要素の重要度調査において提案手法が既存の顕著生マップと比較して優れていると被験者10人全員が解答した。以上の事から\ref{subsec:evaluation1}で説明した提案手法の顕著領域マップの精度と共に重要領域の認識のしやすさも既存の顕著性マップと比較して改善されたと言える。
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=10cm]{figures/result01.png}
-    \caption{重要領域の認識のしやすさに関する評価結果}
-    \label{fig_evaluation02-1}
-\end{figure}
-
-\subsubsection{集約図の効果に関する評価}
-\par 3つ目の評価方法では特に顕著度が高い重要領域をタイル状に並べてまとめた集約図の効果について評価した。図\ref{fig_experience03-1}に示す集約図を見てウェブページの内容を予想してもらう問いでは、「食品系を取り扱う企業のホームページ」というざっくりしたページの内容は被験者全員が分かるものの、「関東に展開するスーパーを展開する企業」などのより詳細な内容は理解するのは難しいように感じた。
-\par 次に、表\ref{table:evaluation03-1}にQ8の重要領域のみを抽出した集約図を見てどの程度ウェブページの内容を判断できるかを質問した結果を、表\ref{table:evaluation03-2}にQ9の初見のウェブページの内容を一目で確認したい時に集約図は効果的だと思うかを質問した結果を示す。Q8の結果を見ると「少し判断できる」と「ある程度判断できる」に意見が集まり、「ほとんど判断できる」は回答者がいなかった。また、Q9の結果を見ると「あまり効果的でない」が2名、「どちらでもない」が2名、「効果的である」が6名で「非常に効果的である」は回答者がいなかった。以上の結果から提案した集約図を見る事でページ内容をある程度は判断できるものの非常に効果があるとは言えないことが明らかになり、ウェブページの内容理解支援ツールとしては改善が必要であると言える。
-
-\begin{table}[H]
-    \caption{Q8の回答結果}
-    \label{table:evaluation03-1}
-    \centering
-     \begin{tabular}{lc}
-      \hline
-      選択肢 & 回答数 \\
-      \hline \hline
-      全く判断できない & 0 \\
-      少し判断できる & 2 \\
-      ある程度判断できる & 8 \\
-      ほとんど判断できる & 0 \\
-      \hline
-    \end{tabular}
-\end{table}
-
-\begin{table}[H]
-    \caption{Q9の回答結果}
-    \label{table:evaluation03-2}
-    \centering
-     \begin{tabular}{lc}
-      \hline
-      選択肢 & 回答数 \\
-      \hline \hline
-      全く効果的でない & 0 \\
-      あまり効果的でない & 2 \\
-      どちらでもない & 2 \\
-      効果的である & 6 \\
-      非常に効果的である & 0 \\
-      \hline
-    \end{tabular}
-\end{table}
