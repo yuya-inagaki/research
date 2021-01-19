@@ -163,130 +163,135 @@
 \par ウェブページには自然画像とは異なり様々なウェブページ固有の要素が存在する。その中の一つであるテキスト要素は自然画像にはほとんど存在せずあまり顕著度が高く評価されないがウェブページには多く存在する。図\ref{fig_textbias}にウェブページのテキスト表示箇所のオリジナルモデルの顕著領域マップと実際の視線データから作成した顕著領域マップの比較を示す。図から分かる通り人はテキスト要素に注目する傾向が高いが、Itti-Kochらのモデルなどの自然画像向け顕著性マップ生成モデルはテキストの顕著度をあまり高く評価しない。テキスト要素の顕著度を正しく評価するために該当要素の顕著度を高くするように重み付けを行った。
 
 
-\subsubsection{要素の位置による重み付け}\label{subsec:system03-2}
-\par 関連研究でも触れたShenらの人間の目の視線を測定するアイトラッカーを用いてウェブページの顕著性を測定した実験によると、図\ref{fig_shen-experience}に示すようにテキスト中心と画像中心とテキスト画像が混合した全てのウェブページにおいて人は左上の領域と中心付近に目線が行く傾向が判明した。ウェブページの左上から中央にかけての領域に注目が集まるの現象はf-biasと言う名で一般的に知られており、本システムでも左上の領域と中心付近で顕著度が高くなるように重み付けを行う。
+\subsubsection{要素の位置とレイアウトによる重み付け}\label{subsec:system03-2}
+\par 関連研究でも触れたが有名なものとしてウェブページには自然画像と異なり、左上から中央付近の領域に存在する要素が注目されやすい傾向があるf-biasというバイアスが存在する。図\ref{fig_gazetime}に第\ref{subsec:gazedataset}節で作成した被験者がデータ分析用のウェブページを10秒間閲覧した際の実際の視線座標データを3秒間ずつヒートマップに表したものを示す。一番右の10秒間全ての視線座標データを合成したヒートマップを見ると左上から中央付近の要素に注目が集まりやすい傾向があるのは明らかである。また時間帯ごとの視線座標の推移を確認すると、最初の３秒間は左上から中央の領域が顕著に注目されている事が確認できる。また、3000ms-6000msや6000-9000msのヒートマップを見ると時間が経過するにつれて被験者の視線は左上から中央付近にかけて移動してより幅広い範囲に広がっている事が確認できる。このように昔からのベーシックデザインだけでなく近年の主流になっているモダンデザインにおいてもf-biasが適応可能である。また、時間の経過につれて注目される領域が大きく変化する事が明らかになった。
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=12cm]{figures/06_gazetime.jpg}
+  \caption{各時間帯ごとの平均顕著性ヒートマップ}
+  \label{fig_gazetime}
+\end{figure}
 
-\par 本システムの位置情報による重み付けの手法をアルゴリズム\ref{alg:weight-position}に示す。要素の中心点の位置によって要素の顕著度の重み付けを行うことにした。左上の領域に大きな重みをつけるtop-left biasについては、横軸方向にどれだけの重みの差をつけるかを表すplace\_weight\_xと縦軸方向にどれだけの重みの差をつけるかを表すplace\_weight\_yの2つの数値を与える事で表現した。また、中心領域に大きな重みをつけるcenter biasにおいては中心部と最外部でどれだけ重みの差をつけるかを表すplace\_weight\_cを与える事で表現した。さらにtop-left biasとcenter biasを組み合わせる事で左上と中央部分に大きな重みをつけるf-biasを表現する。本研究においては横軸の重みの差を表すplace\_weight\_x = 0.1に縦軸の重みの差を表すplace\_weight\_y = 0.4に中心の重みの差を表すplace\_weight\_c = 0.2に設定した。正方形の20$\times$20マスのブロックをウェブページに見立てて重みの数値をシミュレーションした結果を図\ref{fig_fbias}に示す。左図はtop-left biasを、中央はcenter biasを、右図は２つを組み合わせたf-biasを表す。また、赤色に近くほど重みの数値が大きく白色に近くほど数値が小さいことを表す。さらに、図\ref{fig_fbias-test}にテスト用の同じ色の正方形を等間隔で並べたウェブページを入力した時の結果を示す。重み付け前の顕著性マップでは全ての正方形が同じ明度で表わされているが、重み付け後の顕著性マップでは左上から中央にかけての正方形の明度が高く表わされている事が確認できる。なお、認識しやすいように重み付け後の顕著性マップには顕著度のランキングを緑色の枠線の色で表している。
+\par このようなウェブページ固有の視線のバイアスを反映させる為に本システムでは要素の位置情報ならびにウェブページのレイアウトタイプによる重み付けを行う。従来の研究では左上の領域に大きな重みをつけるtop-left biasを横軸方向と縦軸方向にそれぞれ重みを付ける事で擬似的に表現していた。また、中心領域に大きな重みをつけるcenter biasにおいては中心部と最外部でどれだけ重みの差をつけるかを表す重みを設定する事で表現していた。しかしながらこれらの手法では全てのレイアウトにおいて同じ擬似的なバイアスを適応させることになり顕著度評価の正確性はあまり高くない。そこで本研究ではレイアウトタイプによる重み付けを行い、各レイアウトごとの視線データの推移の傾向を分析して結果を適応する。図\ref{fig_layout_result}に各レイアウトに所属するウェブページの中央点とその移動の軌跡を示す。図\ref{fig_layout_result}の×マークはそれぞれのレイアウトに所属する各ウェブページの2秒間の視線座標の平均座標である。また大きく外れているものを除いて各ウェブページの平均座標の全てが含まれるように作成された楕円の中心座標を中央点と呼び、ウェブページ上の要素の中心がこの楕円の中に含まれる場合は閲覧される可能性が高いことを示す。なお、10秒間の閲覧を2秒ごとに区切ることで各時間帯ごとの視線の推移を確認する事が可能である。シングルカラムパターンや2カラムパターンなどのカラムレイアウトは左上の領域から中央の領域にかけて注目されている一方で、ブロークングリッドパターンやフルスクリーンパターンなどのモダンデザインレイアウトは時間の経過による視線の動きはあまり大きくなく、中央付近の要素が注目されやすい。これらの特徴を利用して位置情報とレイアウトによる重み付けを行う。本システムの重み付けの手法をアルゴリズム\ref{alg:weight-position}に示す。
 
-\par 最後に、要素毎に以上の重み付け処理を行なった結果の顕著度を最終的な出力に使用する為にCSVファイルに追記する。
+\par まず初めに調査対象のウェブページのレイアウトの顕著領域情報を表\ref{table:layoutresult}より取得する。次にウェブページの各要素の中心座標が取得した顕著領域の中に入っているかどうかを$judge\_inside\_ellipse$関数で調査する。調査方法については、2秒ごとの合計5つの時間帯の楕円顕著領域のいずれかに要素の中心座標が存在するかどうかを確認して存在する場合は注目される可能性が高いことを示す。注目される可能性が高い要素については反復実験から決定した位置バイアスの重み$weight\_position$を乗算することで要素の顕著度の重み付けを行う。
+
+\par 図\ref{fig_positionbias}にテスト用ウェブページを入力した時の各レイアウトの要素の位置情報による重み付けのシミュレーション結果を示す。テスト用ウェブページは左上の画像のように白色の背景上に黒色の正方形を等間隔で並べたものを使用した。最上部中央の画像のように重み付け前の顕著性マップでは全ての正方形が同じ明度で表わされているが、位置情報による重み付け後の顕著性マップでは第\ref{subsec:gazedataset}節で分析した結果を用いて各レイアウトの左上から中央付近の顕著領域のの正方形の明度が高く表わされている事が確認できる。なお、認識しやすいように重み付け後の顕著領域マップには顕著度のランキングを緑色の枠線の色で表しており、明緑色になるほど顕著度が高く評価されていることを示す。
+
+\par 最後に、要素毎にサイズと要素タイプならびに位置情報による重み付け処理を行なった結果の顕著度を最終的な出力に使用する為にデータベースに保存する。
 
 \begin{algorithm}[H]
-    \caption{位置情報による重み付け(F-bias)}
+  \small
+    \caption{位置情報とレイアウトパターンによる重み付け}
     \label{alg:weight-position}
     \begin{algorithmic}
-    \Function{calc\_salient\_level}{start\_x, start\_y, size\_w, size\_h}
-    \State salient\_level $ \leftarrow $ 要素の明度の平均値(0-255)
-    \State width $ \leftarrow $ 顕著性マップの幅(px)
-    \State height $ \leftarrow $ 顕著性マップの高さ(px) 
-    \State place\_weight\_x $ \leftarrow $ 0.1 //横軸方向の重み
-    \State place\_weight\_y $ \leftarrow $ 0.4 //縦軸方向の重み
-    \State place\_weight\_c $ \leftarrow $ 0.2 //中心方向の重み
-    \If{$size\_w < width$ and $size\_h < height$}
-        \State x\_bias $ \leftarrow $ 1-(place\_weight\_x-((width-(start\_x+$\frac{size\_w}{2}$))*$\frac{place\_weight\_x}{width}$))
-        \State y\_bias $ \leftarrow $ 1-(place\_weight\_y-((height-(start\_y+$\frac{size\_h}{2}$))*$\frac{place\_weight\_y}{height}$))
-        \State top\_left\_bias $ \leftarrow $ x\_bias * y\_bias
-        \State center\_bias\_x $ \leftarrow $ $|\frac{width}{2}-(start\_x+\frac{size\_w}{2})|^2$
-        \State center\_bias\_y $ \leftarrow $ $|\frac{height}{2}-(start\_y+\frac{size\_h}{2})|^2$
-        \State center\_bias $ \leftarrow $ $\sqrt{center\_bias\_x + center\_bias\_y} $
-        \State salient\_level $ \leftarrow $ salient\_level*(topleft\_bias - (place\_weight\_c * center\_bias))
-    \EndIf
-    \State \Return salient\_level
+    \Function{apply\_position\_bias}{salient\_level, start\_x, start\_y, end\_x, end\_y, type}
+    \State weight\_position $\leftarrow$ 位置バイアスの重み
+    \State bias\_info\_list $\leftarrow$ レイアウトの中心座標のリスト
+    \State center\_x = (start\_x + end\_x) / 2 //中心x座標
+    \State center\_y = (start\_y + end\_y) / 2 //中心y座標
+    \For{\texttt{<bias\_info\_list>}}
+      \If{ judge\_inside\_ellipse(center\_x, center\_y, bias\_info) }
+        \State \Return salient\_level $\times$ weight\_position
+      \Else
+        \State \Return salient\_level
+      \EndIf
+    \EndFor
+    \EndFunction
+    \State
+    \Function{judge\_inside\_ellipse}{center\_x, center\_y, bias\_info}
+      \State \Return 中心座標が楕円の中に存在するかどうかを返す
     \EndFunction
     \end{algorithmic}
 \end{algorithm}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=12cm]{figures/fbias.png}
+    \includegraphics[width=12cm]{figures/06_positionbias.jpg}
     \caption{位置情報による重み付けのシミュレーション}
-    \label{fig_fbias}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=12cm]{figures/fbias-test.png}
-    \caption{テスト用ページを入力して得た顕著性マップ}
-    \label{fig_fbias-test}
+    \label{fig_positionbias}
 \end{figure}
 
 
 \subsection{顕著領域の視覚化}\label{subsec:system04}
-% 領域を塗りつぶして生成する顕著性マップと重要領域のランキングの生成方法の記述
-\par ここでは第\ref{subsec:system03}節で計算した顕著度を元に顕著領域の視覚化を行う。本システムでは、顕著度が高い重要領域を要素単位で塗りつぶした顕著領域マップと特に顕著度が高い要素を一つにまとめた集約図の2つの出力を行う。顕著領域の視覚化の流れを図\ref{fig_system04}に示す。
+\par ここでは第\ref{subsec:system03}節で計算した要素ごとの顕著度を元に顕著領域の視覚化を行う。本システムでは、顕著度が高い重要領域を要素単位で塗りつぶした顕著領域マップと特に顕著度が高い要素を一つにまとめた集約図の2つの出力を行う。顕著領域の視覚化の流れを図\ref{fig_system04}に示す。
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=12cm]{figures/system04.png}
+    \includegraphics[width=12cm]{figures/06_process04.jpg}
     \caption{顕著領域の視覚化の流れ}
     \label{fig_system04}
 \end{figure}
 
 \subsubsection{顕著度ランキングの生成}\label{subsec:system04-1}
-\par 顕著領域マップと集約図の生成にあたり、第\ref{subsec:system03}節で計算した顕著度のランキングを作成する。顕著度ランキングの計算アルゴリズムをアルゴリズム\ref{alg:lanking}に示す。まず始めに、第\ref{subsec:system03}節でCSVに保存した顕著度を顕著度が高い順にソートする。本来であれば、顕著度が高い順にランキングを付ければ良いが、図\ref{fig_system4-rank}に示すように同一要素を内包している他の要素も顕著度が高く評価されてしまう問題が生じる。同じ要素が顕著度ランキングに何度も出現する事は問題である為、一度顕著度が高いと評価した要素を内包する外部の要素をNGリストに格納して顕著度ランキングに入らないように評価する。
-
-
+\par 顕著領域マップと集約図の生成にあたり、第\ref{subsec:system03}節で計算した顕著度のランキングを作成する。顕著度ランキングの計算アルゴリズムをアルゴリズム\ref{alg:lanking}に示す。まず始めに、第\ref{subsec:system03}節でデータベースに保存した顕著度を顕著度が高い順にソートする。本来であれば、顕著度が高い順にランキングを付ければ良いが、図\ref{fig_system4-rank}に示すように同一要素を内包している他の要素も顕著度が高く評価されてしまう問題が生じる。同じ要素が顕著度ランキングに何度も出現する事は問題である為、一度顕著度が高いと評価した要素を内包する外部の要素をNGリストに格納して顕著度ランキングに入らないように評価する。また、ウェブページの要素の中には装飾等の為に極端に細長い要素など顕著度ランキングに不必要なノイズが存在する。これらの要素を取り除く為にフィルターをかけて極端な形状の要素を取り除いた。
 
 \newpage
 \begin{algorithm}[H]
-    \caption{顕著度ランキング}
-    \label{alg:lanking}
-    \begin{algorithmic}
+  \small
+  \caption{顕著度ランキング}
+  \label{alg:lanking}
+  \begin{algorithmic}
 
-    \State stag\_list $ \leftarrow $ CSVの読み組み, tag\_list\_num $ \leftarrow $ CSVの行数
-    \State salient\_level = [] // 顕著度を格納するリスト, ng\_list = [] // NGリスト
-    \State high\_element\_list = [] // 顕著度ランキングを格納するリスト
-    \For{$i$ in $range(tag\_list\_num)$}
-        \State salient\_level.append(tag\_listのi行目の要素の顕著度)
-    \EndFor    
-    \State salient\_level\_sort $ \leftarrow $ salient\_levelをソート
-    \State salient\_num $ \leftarrow $ 10, temporal\_num $ \leftarrow $ 1, salient\_num\_first $ \leftarrow $ salient\_num
+  \State stag\_list $ \leftarrow $ CSVの読み組み
+  \State tag\_list\_num $ \leftarrow $ CSVの行数
+  \State salient\_level = [] // 顕著度を格納するリスト
+  \State ng\_list = [] // NGリスト
+  \State high\_element\_list = [] // 顕著度ランキングを格納するリスト
+  \For{$i$ in $range(tag\_list\_num)$}
+    \State salient\_level.append(tag\_listのi行目の要素の顕著度)
+  \EndFor    
+  \State salient\_level\_sort $ \leftarrow $ salient\_levelをソート
+  \State salient\_num $ \leftarrow $ 10 //顕著度ランキングを生成する個数
+  \State temporal\_num $ \leftarrow $ 1
+  \State salient\_num\_first $ \leftarrow $ salient\_num
 
-    \While{while salient\_num $>$ 0}
-        \State most\_salient $ \leftarrow $ salient\_level\_sort[tag\_list\_num - temporal\_num]
-        \If{(most\_salient in ng\_list) == False}
-        \State start\_x, start\_y, end\_x, end\_y $\leftarrow$ CSVのmost\_salient行目から取得
-        \State size $\leftarrow$ CSVからmost\_salient行目の要素のwidth $*$ heightを取得
-        \If{(end\_x $-$ start\_x)/(end\_y $-$ start\_y) $<$ 10}
-        \State high\_element\_list.append(most\_salient)
-        \State salient\_num $\leftarrow$ salient\_num - 1
-        \For{$i=1$ in $range(tag\_list\_num)$}
-        \If{(most\_salient in ng\_list) == False}
-        \State r\_start\_x, r\_start\_y, r\_end\_x, r\_end\_y $\leftarrow$ i行目から取得
-        \State r\_size $\leftarrow$ CSVからi行目の要素のwidth*heightを取得
-        \If{i行目要素とmost\_salient行目要素が内包関係}
-        \If{r\_size $-$ size $<$ 200 $or$ size $-$ r\_size $<$ 200}
-        \State ng\_list.append(i) //NGリストにi行目要素を格納
-        \EndIf
-        \EndIf
-        \EndIf
-        \EndFor 
-        \EndIf
-        \Else
-        \State temporal\_num $\leftarrow$ temporal\_num $+$ 1
-        \EndIf
-    \EndWhile
-    \end{algorithmic}
+  \While{while salient\_num $>$ 0}
+    \State most\_salient $ \leftarrow $ salient\_level\_sort[tag\_list\_num - temporal\_num]
+    \If{(most\_salient in ng\_list) == False}
+    \State start\_x, start\_y, end\_x, end\_y $\leftarrow$ CSVのmost\_salient行目から取得
+    \State size $\leftarrow$ CSVからmost\_salient行目の要素のwidth $*$ heightを取得
+    \If{(end\_x $-$ start\_x)/(end\_y $-$ start\_y) $<$ 10}
+    \State high\_element\_list.append(most\_salient)
+    \State salient\_num $\leftarrow$ salient\_num - 1
+    \For{$i=1$ in $range(tag\_list\_num)$}
+    \If{(most\_salient in ng\_list) == False}
+    \State r\_start\_x, r\_start\_y, r\_end\_x, r\_end\_y $\leftarrow$ i行目から取得
+    \State r\_size $\leftarrow$ CSVからi行目の要素のwidth*heightを取得
+    \If{i行目要素とmost\_salient行目要素が内包関係}
+    \If{r\_size $-$ size $<$ 200 $or$ size $-$ r\_size $<$ 200}
+    \State ng\_list.append(i) //NGリストにi行目要素を格納
+    \EndIf
+    \EndIf
+    \EndIf
+    \EndFor 
+    \EndIf
+    \Else
+    \State temporal\_num $\leftarrow$ temporal\_num $+$ 1
+    \EndIf
+  \EndWhile
+  \end{algorithmic}
 \end{algorithm}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=12cm]{figures/include-rank.png}
+    \includegraphics[width=12cm]{figures/06_rank.png}
     \caption{要素の内包関係を考慮した時としない時の顕著度ランキング}
     \label{fig_system4-rank}
 \end{figure}
 
 \subsubsection{顕著領域マップの生成}\label{subsec:system04-1}
-\par 顕著領域マップの生成方法について説明する。第\ref{subsec:system03}節で計算した顕著度は0$\sim$255の範囲内の実数で表わされている。位置情報を取得した画面上に表示されている全ての要素の領域をこの顕著度を明度とした長方形で塗り潰す。また、第\ref{subsec:system03-1}節で説明した重み付けにより全体的に顕著度が低くなっている為、補正値を与える事ですべての要素の顕著度を補正値分高くすることとする。
-\par さらに、特に顕著度が高い重要領域を視覚化する為に第\ref{subsec:system04-1}項で作成した顕著度ランキングの上位10個の要素の外枠を顕著度が高い順に明るい緑色の線で描写する。以上の作業を行う事で顕著領域マップの生成を行う。図\ref{fig_tile-example}に第\ref{subsec:system04-1}項で説明したテスト用ウェブページのURLを入力して生成された顕著領域マップの例を示す。
+\par 顕著領域マップの生成方法について説明する。第\ref{subsec:system03}節で計算した各要素の顕著度は上限なしの単精度浮動小数点型で表されている。要素を顕著度に応じた明度で塗りつぶす為にはコンピューター上で表現できる色の濃度の0$\sim$255の範囲内で表現する必要がある。本システムでは最も顕著度の高い要素の明度が$255$になるように顕著そを圧縮して、位置情報を取得した画面上に表示されている全ての要素の領域をこの顕著度を明度とした長方形で塗り潰す。
+
+\par さらに、特に顕著度が高い重要領域を視覚化する為に第\ref{subsec:system04-1}項で作成した顕著度ランキングの指定個数（デフォルトは10個）の要素の外枠を顕著度が高い順に明るい緑色の線で描写する。このことにより、要素の塗りつ潰された明度の微妙な差異を簡単に見分ける事が可能になる。以上の作業を行う事で顕著領域マップの生成を行う。図\ref{fig_output-example}にテスト用ウェブページのURLを入力して生成された顕著領域マップの例を示す。なお、テストページには左図のように大きさが同じ長方形でそれぞれ異なる明度で塗りつぶされた要素が等間隔に並べられたページを作成して使用した。
 
 \subsubsection{集約図の生成}\label{subsec:system04-2}
-\par 集約図の生成方法について説明する。第\ref{subsec:system04-1}項で作成した顕著度ランキングを元に顕著度が上位10個の要素の領域をスクリーンショットから切り取りタイル状に並べる。本システムでは上段に上位2個を、中段に3位$\sim$5位の3個を、下段には6位$\sim$10位の5個を並べる事で表現した。図\ref{fig_tile-example}に第\ref{subsec:system04-1}項で説明したテスト用ウェブページのURLを入力して生成された集約図の例を示す。
-
+\par 集約図の生成方法について説明する。第\ref{subsec:system04-1}項で作成した顕著度ランキングを元に顕著度が特に高い指定個数（デフォルトは10個）の要素の領域をスクリーンショットから切り取りタイル状に並べる。本システムでは上段に上位2個を、中段に3位$\sim$5位の3個を、下段には6位$\sim$10位の5個を並べる事で顕著度が高い要素が大きい面積で表示されるようにした。図\ref{fig_output-example}に顕著領域マップの説明と同様のテスト用ウェブページのURLを入力して生成された集約図の例を示す。顕著度が高く目立ちやすい1番の要素から順番にタイル状に並べられてどの要素が注目されやすいのかを一目で確認する事が可能である。
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=10cm]{figures/example-output.png}
-    \caption{生成される顕著領域マップと集約図の例}
-    \label{fig_tile-example}
+  \centering
+  \includegraphics[width=12.5cm]{figures/06_example-output.png}
+  \caption{生成される顕著領域マップと集約図の例}
+  \label{fig_output-example}
 \end{figure}
