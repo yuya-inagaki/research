@@ -1,0 +1,19 @@
+% 第２章 ウェブページの構造
+\newpage
+\renewcommand{\baselinestretch}{1.5} % 行間の倍率指定
+\section{ウェブページの構造}\label{sec:scraping}
+\renewcommand{\baselinestretch}{1} % 行間の倍率指定
+\par 近年PHPやRubyなど様々なプログラミング言語によりウェブページやウェブアプリケーションは開発されているが、最終的にはHTML(Hyper Text Markup Language)と呼ばれるマークアップ言語\cite{mozilla_html}を動的に出力することでウェブブラウザ上にウェブページを表示している。つまり、HTMLを分析することでウェブページの構造が分かるということだ。それらの構造を解析する事で様々な情報を取得する方法としてウェブスクレイピング技術がある。
+\subsection{ウェブスクレイピングとは}
+\par サーバーサイドのプログラムを使用することで外部サーバーにアクセスしてウェブサイト上から必要な情報を取得することをウェブスクレイピングという\cite{ntt_scraping}。似たような技術としてAPIが存在するがAPIはサービス提供者側が技術者向けに情報提供する機能のことで、ウェブスクレイピングとは異なる。通常はウェブページのタイトルや株価などの可変数値を取得する目的で使用されることが多いが、本研究ではスクリーンショットの取得やウェブページの構造解析の為にHTMLと各タグ要素の位置情報を取得する為に使用する。
+
+\subsection{ライブラリ}
+\par ウェブスクレイピングを簡単に出来るように汎用性のあるプログラムを再利用可能なように集めたライブラリが数多く存在する。ここでは本研究で使用したSelenium WebDriver\cite{selenium}とBeautiful Soup\cite{beautifulsoup}の2つのライブラリを説明する。
+
+\begin{itemize}
+    \item Selenium WebDriver
+    \par ~~Selenium WebDriverはウェブアプリケーションの自動テストツールとして開発され、ウェブブラウザの拡張機能を使用する事でJavaやPython等のプログラムでブラウザの自動操作を行う事が可能である。本研究では、PythonでSelenium WebDriverを使用する事でスクリーンショットやHTMLの取得のほか画像等の要素の位置とサイズを取得する目的で使用した。 \\
+
+    \item Beautiful Soup
+    \par ~~Beautiful SoupはSelenium WebDriverとは異なりPython用のライブラリで、取得したHTMLからタグを抽出したり必要な情報を取得したりする事が可能である。本研究では、Selenium WebDriverを用いて取得したHTMLを解析しやすいように加工する目的でBeautiful Soupを使用した。 \\
+\end{itemize}
