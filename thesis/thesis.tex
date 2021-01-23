@@ -7,15 +7,17 @@
 \usepackage{here}
 \usepackage{hhline}
 \usepackage{url}
+\usepackage{multirow}
 \usepackage{algpseudocode,algorithm}
 
 \titleformat*{\section}{\Huge\bfseries}
 \makeatletter
 
-\def\@thesis{2020年度 修士卒業論文}
+\def\@thesis{2020年度 修士論文}
 \def\id#1{\def\@id{#1}}
 \def\department#1{\def\@department{#1}}
 \def\teacher#1{\def\@teacher{#1}}
+\def\research#1{\def\@research{#1}}
 \renewcommand{\thesection}{第\arabic{section} 章}
 % 図・表番号の設定
 \renewcommand{\theequation}{\arabic{section}.\arabic{equation}}
@@ -31,11 +33,12 @@
 {\LARGE \underline{\@thesis} \par}
 \vspace{15mm}
 {\Huge\bf \@title \par} % 論文のタイトル部分
-\vspace{25mm}
+\vspace{20mm}
 {\Large \@date\par} % 提出年月日部分
-\vspace{20mm}
+\vspace{15mm}
 {\Large 指導教員: \@teacher 教授\par}
-\vspace{20mm}
+{\Large 研究指導名: \@research 研究\par}
+\vspace{15mm}
 {\Large \@department \par} % 所属部分
 \vspace{5mm}
 {\Large 学籍番号: \@id \par} % 学籍番号部分
@@ -50,8 +53,10 @@
 \title{ウェブページの重要領域の視覚化に関する研究}
 \date{2021年1月25日(月)提出}
 \teacher{深澤良彰}
+\research{ソフトウェア開発工学}
 \department{
-  早稲田大学　基幹理工学研究科　情報理工学専攻
+  早稲田大学大学院　基幹理工学研究科\\
+  情報理工・情報通信専攻　深澤研究室
 }
 \id{5119F009-4}
 \author{稲垣 有哉}
@@ -73,8 +78,8 @@
 \pagenumbering{arabic}
 \setcounter{page}{1} %ページのスタート番号
 \pagestyle{fancy}
-\lhead{2020年度 修士卒業論文}
-\rhead{早稲田大学基幹理工学研究科情報理工学専攻 深澤研究室}
+\lhead{2020年度 修士論文}
+\rhead{早稲田大学大学院基幹理工学研究科 深澤研究室}
 
 % 本文
 \input{./chapter1.tex}
@@ -84,12 +89,14 @@
 % \input{./chapter5.tex}
 % \input{./chapter6.tex}
 % \input{./chapter7.tex}
+% \input{./chapter8.tex}
+% \input{./old.tex}
 
 % 謝辞
 \newpage
 \renewcommand{\baselinestretch}{1.5}
 \section*{謝辞}
-\par 本研究を勧めるに当たり、御助言、御協力を頂いた早稲田大学基幹理工学部情報理工学科の深澤良彰教授に深く感謝致します。また、1年間に渡るご指導をして頂いた東京女子大学現代教養学部人間科学科コミュニケーション専攻の白銀純子准教授、神奈川工科大学情報学部情報ネットワーク・コミュニケーション学科の岩田一准教授に深く感謝致します。
+\par 本研究を勧めるに当たり、御助言、御協力を頂いた早稲田大学基幹理工学研究科情報理工・情報通信専攻の深澤良彰教授に深く感謝致します。また、3年間に渡るご指導をして頂いた東京女子大学現代教養学部人間科学科コミュニケーション専攻の白銀純子准教授、神奈川工科大学情報学部情報ネットワーク・コミュニケーション学科の岩田一准教授に深く感謝致します。
 \addcontentsline{toc}{section}{謝辞}
 
 % 参考文献
